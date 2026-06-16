@@ -1,27 +1,38 @@
-# Local Trae preflight scaffolding
-.env
-.trae-preflight.json
-README.preflight.md
-scripts/smoke.sh
-scripts/smoke.ps1
-
-# Common local runtime noise
-.DS_Store
-node_modules/
-.venv/
-venv/
-__pycache__/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
+HELP.md
 target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
 build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
+
+### Node ###
+node_modules/
 dist/
-.next/
-.nuxt/
-coverage/
-*.log
-*.tmp
-*.sqlite
-*.sqlite3
-*.db
+*.local
