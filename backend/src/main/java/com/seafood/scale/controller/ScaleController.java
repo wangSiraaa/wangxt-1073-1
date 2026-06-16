@@ -83,9 +83,12 @@ public class ScaleController {
     }
 
     @PostMapping("/check-expired")
-    public Result<Void> checkExpired() {
-        scaleService.checkAndUpdateExpiredScales();
-        return Result.success();
+    public Result<Map<String, Object>> checkExpired(
+            @RequestHeader(value = "X-User-Id", required = false) Long userId,
+            @RequestHeader(value = "X-User-Name", required = false) String userName) {
+        Long operatorId = userId != null ? userId : -1L;
+        String operatorName = userName != null && !userName.isEmpty() ? userName : "SYSTEM";
+        return Result.success(scaleService.checkAndUpdateExpiredScales(operatorId, operatorName));
     }
 
     @DeleteMapping("/{id}")

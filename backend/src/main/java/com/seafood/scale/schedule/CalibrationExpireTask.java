@@ -13,6 +13,6 @@ public class CalibrationExpireTask {
 
     @Scheduled(cron = "0 0 2 * * ?")
     public void checkExpiredScales() {
-        scaleService.checkAndUpdateExpiredScales();
+        scaleService.checkAndUpdateExpiredScales(-1L, "SYSTEM");
     }
 }

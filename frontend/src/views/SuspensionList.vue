@@ -44,6 +44,7 @@
             <el-option label="校准过期" value="CALIBRATION_EXPIRED" />
             <el-option label="复检未通过" value="REINSPECTION_FAILED" />
             <el-option label="投诉成立" value="COMPLIANT_ESTABLISHED" />
+            <el-option label="人工暂停" value="MANUAL" />
           </el-select>
         </el-form-item>
         <el-form-item label="关联类型">
@@ -132,10 +133,10 @@ const submitReopen = async () => {
 }
 
 const typeTagType = (t) => ({
-  CALIBRATION_EXPIRED: 'warning', REINSPECTION_FAILED: 'danger', COMPLIANT_ESTABLISHED: 'danger'
+  CALIBRATION_EXPIRED: 'warning', REINSPECTION_FAILED: 'danger', COMPLIANT_ESTABLISHED: 'danger', MANUAL: 'info'
 }[t] || 'info')
 const typeText = (t) => ({
-  CALIBRATION_EXPIRED: '校准过期', REINSPECTION_FAILED: '复检未通过', COMPLIANT_ESTABLISHED: '投诉成立'
+  CALIBRATION_EXPIRED: '校准过期', REINSPECTION_FAILED: '复检未通过', COMPLIANT_ESTABLISHED: '投诉成立', MANUAL: '人工暂停'
 }[t] || t)
 
 onMounted(loadList)

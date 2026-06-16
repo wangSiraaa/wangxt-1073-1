@@ -32,6 +32,7 @@
         <template #default="scope">
           <el-button size="small" link type="primary" @click="handleEdit(scope.row)">编辑</el-button>
           <el-button size="small" link type="info" @click="handleViewScaleUsage(scope.row)">秤具状态</el-button>
+          <el-button size="small" link type="primary" @click="handleCanOperateCheck(scope.row)">营业检查</el-button>
           <el-button size="small" link :type="scope.row.businessQualified ? 'warning' : 'success'"
                      @click="handleToggleQualified(scope.row)">
             {{ scope.row.businessQualified ? '取消资格' : '恢复资格' }}
@@ -125,13 +126,85 @@
         </el-table-column>
       </el-table>
     </el-dialog>
+
+    <el-dialog v-model="canOperateVisible" :title="'摊位 ' + canOperateInfo.stallCode + ' 营业资格检查'" width="780px">
+      <el-alert
+        :title="canOperateInfo.canOperate ? '✅ 允许营业' : '⛔ 禁止营业'"
+        :type="canOperateInfo.canOperate ? 'success' : 'error'"
+        :closable="false"
+        style="margin-bottom: 16px"
+      />
+      <el-descriptions :column="2" border size="small" style="margin-bottom: 16px">
+        <el-descriptions-item label="摊位状态">{{ canOperateInfo.stallStatusText || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="营业资格">
+          <el-tag :type="canOperateInfo.businessQualified ? 'success' : 'danger'" size="small">{{ canOperateInfo.businessQualified ? '有效' : '无效' }}</el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="绑定秤具总数">{{ canOperateInfo.totalScaleCount ?? 0 }}</el-descriptions-item>
+        <el-descriptions-item label="可用秤具数">{{ canOperateInfo.usableScaleCount ?? 0 }}</el-descriptions-item>
+        <el-descriptions-item label="过期秤具数">
+          <el-tag v-if="(canOperateInfo.expiredScaleCount ?? 0) > 0" type="danger" size="small">{{ canOperateInfo.expiredScaleCount }}</el-tag>
+          <span v-else>0</span>
+        </el-descriptions-item>
+        <el-descriptions-item label="停用秤具数">
+          <el-tag v-if="(canOperateInfo.disabledScaleCount ?? 0) > 0" type="warning" size="small">{{ canOperateInfo.disabledScaleCount }}</el-tag>
+          <span v-else>0</span>
+        </el-descriptions-item>
+        <el-descriptions-item label="有效暂停记录">
+          <el-tag v-if="canOperateInfo.hasActiveSuspension" type="danger" size="small">存在</el-tag>
+          <span v-else>无</span>
+        </el-descriptions-item>
+      </el-descriptions>
+
+      <div v-if="canOperateInfo.blockReasons && canOperateInfo.blockReasons.length > 0" style="margin-bottom: 16px">
+        <div style="font-weight: 600; margin-bottom: 6px; color: #F56C6C">阻断原因：</div>
+        <ul style="margin: 0; padding-left: 20px">
+          <li v-for="(r, i) in canOperateInfo.blockReasons" :key="i" style="color: #F56C6C; line-height: 1.8">{{ r }}</li>
+        </ul>
+      </div>
+
+      <div v-if="canOperateInfo.activeSuspension" style="margin-bottom: 16px">
+        <div style="font-weight: 600; margin-bottom: 6px">当前有效暂停：</div>
+        <el-descriptions :column="2" border size="small">
+          <el-descriptions-item label="暂停类型">{{ suspensionTypeText(canOperateInfo.activeSuspension.suspensionType) }}</el-descriptions-item>
+          <el-descriptions-item label="暂停时间">{{ canOperateInfo.activeSuspension.suspendedAt || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="操作人">{{ canOperateInfo.activeSuspension.operatorName || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="关联类型">{{ canOperateInfo.activeSuspension.relatedType || '-' }}</el-descriptions-item>
+        </el-descriptions>
+        <div v-if="canOperateInfo.activeSuspension.reason" style="margin-top:8px; color:#606266; font-size:12px">
+          原因：{{ canOperateInfo.activeSuspension.reason }}
+        </div>
+      </div>
+
+      <div v-if="canOperateInfo.scales && canOperateInfo.scales.length > 0">
+        <div style="font-weight: 600; margin-bottom: 6px">绑定秤具快照：</div>
+        <el-table :data="canOperateInfo.scales" border stripe size="small">
+          <el-table-column prop="scaleCode" label="秤具编号" width="140" />
+          <el-table-column label="状态" width="110">
+            <template #default="s">
+              <el-tag :type="s.row.expired ? 'danger' : (s.row.status === 'DISABLED' ? 'warning' : 'success')" size="small">
+                {{ s.row.expired ? '校准过期' : (s.row.statusText || s.row.status) }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="calibrationExpireDate" label="校准到期日" width="120" />
+          <el-table-column label="营业资格" width="90">
+            <template #default="s">
+              <el-tag :type="s.row.businessQualified ? 'success' : 'danger'" size="small">{{ s.row.businessQualified ? '有效' : '无效' }}</el-tag>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+      <template #footer>
+        <el-button type="primary" @click="canOperateVisible = false">知道了</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getStalls, createStall, updateStall, deleteStall, updateStallQualified } from '../api/stall'
+import { getStalls, createStall, updateStall, deleteStall, updateStallQualified, canStallOperate } from '../api/stall'
 import { getStallScaleUsage } from '../api/stallScaleUsage'
 
 const loading = ref(false)
@@ -243,6 +316,21 @@ const scaleStatusLabel = (s) => ({
   NORMAL: '正常', NEEDS_RECTIFICATION: '限期整改', DISABLED: '停用',
   CALIBRATION_EXPIRED: '校准过期', BORROWED: '已借出'
 }[s] || s || '')
+
+const suspensionTypeText = (t) => ({
+  CALIBRATION_EXPIRED: '校准过期', REINSPECTION_FAILED: '复检未通过',
+  COMPLIANT_ESTABLISHED: '投诉成立', MANUAL: '人工暂停'
+}[t] || t || '-')
+
+const canOperateVisible = ref(false)
+const canOperateInfo = ref({})
+
+const handleCanOperateCheck = async (row) => {
+  try {
+    canOperateInfo.value = await canStallOperate(row.id) || {}
+    canOperateVisible.value = true
+  } catch (e) { console.error(e) }
+}
 
 onMounted(loadList)
 </script>

@@ -192,9 +192,34 @@ const loadList = async () => {
 }
 
 const checkExpired = async () => {
-  await checkExpiredScales()
-  ElMessage.success('已检查并更新过期状态')
-  loadList()
+  try {
+    const res = await checkExpiredScales() || {}
+    const msg = [
+      '检查完成：新发现过期秤 ',
+      String(res.expiredScaleCount || 0),
+      ' 台',
+      res.alreadyExpiredCount ? '（含此前已标记 ' + res.alreadyExpiredCount + ' 台）' : '',
+      '，强制暂停摊位 ',
+      String(res.suspendedStallCount || 0),
+      ' 个'
+    ].join('')
+    if (res.suspendedStalls && res.suspendedStalls.length > 0) {
+      const stalls = res.suspendedStalls.map(function (s) {
+        return '  • ' + (s.stallCode || ('#' + s.stallId)) + ' ' + (s.stallName || '') + (s.note ? ' (' + s.note + ')' : '')
+      }).join('\n')
+      ElMessageBox.alert(
+        msg + '\n\n受影响摊位明细：\n' + stalls,
+        '过期检查结果',
+        { type: res.suspendedStallCount > 0 ? 'warning' : 'info' }
+      )
+    } else {
+      ElMessage.success(msg)
+    }
+    loadList()
+  } catch (e) {
+    console.error(e)
+    ElMessage.error('过期检查失败，请查看日志')
+  }
 }
 
 const handleAdd = () => {
@@ -235,7 +260,7 @@ const submitBind = async () => {
 
 const handleToggleQualified = async (row) => {
   try {
-    await ElMessageBox.confirm(`确定要${row.businessQualified ? '取消' : '恢复'}该秤具的营业资格吗？`, '提示', { type: 'warning' })
+    await ElMessageBox.confirm('确定要' + (row.businessQualified ? '取消' : '恢复') + '该秤具的营业资格吗？', '提示', { type: 'warning' })
     await updateScaleQualified(row.id, !row.businessQualified)
     ElMessage.success('操作成功'); loadList()
   } catch (e) { if (e !== 'cancel') console.error(e) }
@@ -243,7 +268,7 @@ const handleToggleQualified = async (row) => {
 
 const handleDelete = async (row) => {
   try {
-    await ElMessageBox.confirm(`确定要删除秤具 ${row.scaleCode} 吗？`, '提示', { type: 'warning' })
+    await ElMessageBox.confirm('确定要删除秤具 ' + row.scaleCode + ' 吗？', '提示', { type: 'warning' })
     await deleteScale(row.id); ElMessage.success('删除成功'); loadList()
   } catch (e) { if (e !== 'cancel') console.error(e) }
 }
