@@ -52,8 +52,10 @@ public class ScaleBorrowController {
         String borrowReason = (String) body.get("borrowReason");
         LocalDateTime expectedReturn = body.get("expectedReturnAt") != null ?
                 LocalDateTime.parse((String) body.get("expectedReturnAt")) : null;
+        Long originalScaleId = body.get("originalScaleId") != null ? Long.valueOf(body.get("originalScaleId").toString()) : null;
+        String borrowContext = (String) body.get("borrowContext");
         return Result.success(scaleBorrowService.borrowScale(scaleId, toStallId, borrowerId,
-                borrowerName, borrowReason, expectedReturn, userId, userName));
+                borrowerName, borrowReason, expectedReturn, originalScaleId, borrowContext, userId, userName));
     }
 
     @PutMapping("/{id}/return")

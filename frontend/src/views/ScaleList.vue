@@ -31,6 +31,13 @@
           </el-tag>
         </template>
       </el-table-column>
+      <el-table-column label="借用/替代" width="110">
+        <template #default="scope">
+          <el-tag v-if="scope.row.status === 'BORROWED'" type="warning" size="small">已借出</el-tag>
+          <el-tag v-else-if="scope.row.status === 'NEEDS_RECTIFICATION' && scope.row.stallId" type="info" size="small">待替代</el-tag>
+          <span v-else>-</span>
+        </template>
+      </el-table-column>
       <el-table-column label="营业资格" width="90">
         <template #default="scope">
           <el-tag :type="scope.row.businessQualified ? 'success' : 'danger'" size="small">
@@ -38,10 +45,11 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="260" fixed="right">
+      <el-table-column label="操作" width="310" fixed="right">
         <template #default="scope">
           <el-button size="small" link type="primary" @click="handleEdit(scope.row)">编辑</el-button>
           <el-button size="small" link type="warning" @click="handleBind(scope.row)">绑定摊位</el-button>
+          <el-button v-if="scope.row.stallId" size="small" link type="info" @click="handleViewUsage(scope.row)">摊位秤况</el-button>
           <el-button size="small" link :type="scope.row.businessQualified ? 'warning' : 'success'"
                      @click="handleToggleQualified(scope.row)">
             {{ scope.row.businessQualified ? '取消资格' : '恢复' }}
@@ -108,6 +116,48 @@
         <el-button type="primary" @click="submitBind">确定</el-button>
       </template>
     </el-dialog>
+
+    <el-dialog v-model="scaleUsageVisible" :title="'摊位 ' + scaleUsageInfo.stallCode + ' 秤具使用状态'" width="900px">
+      <el-alert
+        :title="scaleUsageInfo.canOperate ? '该摊位当前可以营业' : '该摊位当前无法营业'"
+        :type="scaleUsageInfo.canOperate ? 'success' : 'error'"
+        :closable="false"
+        style="margin-bottom: 16px"
+      />
+      <el-table :data="scaleUsageInfo.scales || []" border stripe size="small">
+        <el-table-column prop="scaleCode" label="秤具编号" width="120" />
+        <el-table-column label="类型" width="100">
+          <template #default="scope">
+            <el-tag :type="scope.row.original ? '' : 'warning'" size="small">
+              {{ scope.row.original ? '原配秤' : '备用秤' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="在用" width="70">
+          <template #default="scope">
+            <el-tag :type="scope.row.currentlyInUse ? 'success' : 'info'" size="small">
+              {{ scope.row.currentlyInUse ? '是' : '否' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="活跃投诉" width="90">
+          <template #default="scope">
+            <el-badge :value="scope.row.activeComplaintCount || 0" :type="scope.row.activeComplaintCount > 0 ? 'danger' : 'info'" />
+          </template>
+        </el-table-column>
+        <el-table-column label="关联信息" show-overflow-tooltip>
+          <template #default="scope">
+            <div v-if="scope.row.borrowedScaleCode" style="color: #67C23A">
+              替代秤: {{ scope.row.borrowedScaleCode }}
+              <span v-if="scope.row.borrowContext">({{ borrowContextLabel(scope.row.borrowContext) }})</span>
+            </div>
+            <div v-if="scope.row.originalScaleCode" style="color: #E6A23C">
+              原秤: {{ scope.row.originalScaleCode }} ({{ scaleStatusLabel(scope.row.originalScaleStatus) }})
+            </div>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-dialog>
   </div>
 </template>
 
@@ -118,6 +168,7 @@ import {
   getScales, createScale, updateScale, deleteScale,
   bindScaleStall, updateScaleQualified, checkExpiredScales
 } from '../api/scale'
+import { getStallScaleUsage } from '../api/stallScaleUsage'
 
 const loading = ref(false)
 const list = ref([])
@@ -207,6 +258,27 @@ const scaleStatusText = (s) => ({
 }[s] || s)
 const sealTagType = (s) => ({ INTACT: 'success', DAMAGED: 'warning', MISSING: 'danger' }[s] || 'info')
 const sealText = (s) => ({ INTACT: '完好', DAMAGED: '损坏', MISSING: '缺失' }[s] || s)
+
+const scaleUsageVisible = ref(false)
+const scaleUsageInfo = ref({})
+
+const handleViewUsage = async (row) => {
+  if (!row.stallId) { ElMessage.warning('该秤具未绑定摊位'); return }
+  try {
+    scaleUsageInfo.value = await getStallScaleUsage(row.stallId) || {}
+    scaleUsageVisible.value = true
+  } catch (e) { console.error(e) }
+}
+
+const borrowContextLabel = (c) => ({
+  RECTIFICATION_REPLACEMENT: '整改替代', CALIBRATION_REPLACEMENT: '校准替代',
+  REINSPECTION_REPLACEMENT: '复检替代', TEMPORARY: '临时借用'
+}[c] || '临时借用')
+
+const scaleStatusLabel = (s) => ({
+  NORMAL: '正常', NEEDS_RECTIFICATION: '限期整改', DISABLED: '停用',
+  CALIBRATION_EXPIRED: '校准过期', BORROWED: '已借出'
+}[s] || s || '')
 
 onMounted(loadList)
 </script>

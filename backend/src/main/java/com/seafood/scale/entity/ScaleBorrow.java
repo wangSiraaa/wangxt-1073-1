@@ -18,6 +18,12 @@ public class ScaleBorrow {
     @Column(name = "borrowed_to_stall_id")
     private Long borrowedToStallId;
 
+    @Column(name = "original_scale_id")
+    private Long originalScaleId;
+
+    @Column(name = "borrow_context", length = 30)
+    private String borrowContext;
+
     @Column(name = "borrower_id")
     private Long borrowerId;
 

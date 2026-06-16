@@ -12,6 +12,11 @@
       <el-table-column prop="stallId" label="摊位ID" width="80" />
       <el-table-column prop="scaleId" label="秤具ID" width="80" />
       <el-table-column prop="metrologistName" label="计量员" width="100" />
+      <el-table-column label="优先级" width="90">
+        <template #default="scope">
+          <el-tag :type="priorityTagType(scope.row.priority)" size="small">{{ priorityText(scope.row.priority) }}</el-tag>
+        </template>
+      </el-table-column>
       <el-table-column label="状态" width="100">
         <template #default="scope">
           <el-tag :type="statusTagType(scope.row.status)" size="small">{{ statusText(scope.row.status) }}</el-tag>
@@ -149,7 +154,12 @@ const completeRules = {
 
 const loadList = async () => {
   loading.value = true
-  try { list.value = await getReinspections() || [] } finally { loading.value = false }
+  try {
+    const data = await getReinspections() || []
+    const order = { EMERGENCY: 0, URGENT: 1, NORMAL: 2 }
+    data.sort((a, b) => (order[a.priority] ?? 2) - (order[b.priority] ?? 2))
+    list.value = data
+  } finally { loading.value = false }
 }
 
 const handleAdd = () => {
@@ -228,6 +238,8 @@ const statusText = (s) => ({
   PENDING: '待处理', SCHEDULED: '已预约', IN_PROGRESS: '进行中',
   PASSED: '通过', FAILED: '未通过', CANCELLED: '已取消'
 }[s] || s)
+const priorityTagType = (p) => ({ NORMAL: 'info', URGENT: 'warning', EMERGENCY: 'danger' }[p] || 'info')
+const priorityText = (p) => ({ NORMAL: '普通', URGENT: '紧急', EMERGENCY: '特级' }[p] || p)
 
 onMounted(loadList)
 </script>

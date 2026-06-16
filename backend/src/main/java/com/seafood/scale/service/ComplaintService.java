@@ -3,6 +3,7 @@ package com.seafood.scale.service;
 import com.seafood.scale.entity.Complaint;
 import com.seafood.scale.entity.Reinspection;
 import com.seafood.scale.enums.ComplaintStatus;
+import com.seafood.scale.enums.ReinspectionPriority;
 import com.seafood.scale.enums.ReinspectionStatus;
 import com.seafood.scale.repository.ComplaintRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,21 +82,39 @@ public class ComplaintService {
             complaint.setHandleTime(LocalDateTime.now());
             Complaint saved = complaintRepository.save(complaint);
 
+            ReinspectionPriority priority = determineReinspectionPriority(complaint.getStallId());
+
             Reinspection reinspection = new Reinspection();
             reinspection.setComplaintId(id);
             reinspection.setStallId(complaint.getStallId());
             reinspection.setScaleId(complaint.getScaleId());
             reinspection.setStatus(ReinspectionStatus.PENDING);
+            reinspection.setPriority(priority);
             Reinspection savedReinspection = reinspectionService.create(reinspection, operatorId, operatorName);
             saved.setReinspectionId(savedReinspection.getId());
             complaintRepository.save(saved);
 
             auditLogService.log("ESTABLISH_COMPLAINT", "COMPLAINT", id,
                     operatorId, operatorName, "COMPLAINT_DESK",
-                    "投诉成立，生成复检任务: " + complaint.getComplaintNo(), null);
+                    "投诉成立，生成复检任务(优先级:" + priority + "): " + complaint.getComplaintNo(), null);
             return saved;
         }
         return null;
+    }
+
+    private ReinspectionPriority determineReinspectionPriority(Long stallId) {
+        if (stallId == null) {
+            return ReinspectionPriority.NORMAL;
+        }
+        LocalDateTime oneMonthAgo = LocalDateTime.now().minusMonths(1);
+        long recentCount = complaintRepository.countByStallIdAndStatusAndHandleTimeAfter(
+                stallId, ComplaintStatus.ESTABLISHED, oneMonthAgo);
+        if (recentCount >= 3) {
+            return ReinspectionPriority.EMERGENCY;
+        } else if (recentCount >= 2) {
+            return ReinspectionPriority.URGENT;
+        }
+        return ReinspectionPriority.NORMAL;
     }
 
     @Transactional

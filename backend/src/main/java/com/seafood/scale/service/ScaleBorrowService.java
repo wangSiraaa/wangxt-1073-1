@@ -42,10 +42,15 @@ public class ScaleBorrowService {
         return scaleBorrowRepository.findByIsReturnedFalse();
     }
 
+    public List<ScaleBorrow> findActiveBorrowsByStall(Long stallId) {
+        return scaleBorrowRepository.findByBorrowedToStallIdAndIsReturnedFalse(stallId);
+    }
+
     @Transactional
     public ScaleBorrow borrowScale(Long scaleId, Long toStallId, Long borrowerId,
                                    String borrowerName, String borrowReason,
                                    LocalDateTime expectedReturnAt,
+                                   Long originalScaleId, String borrowContext,
                                    Long operatorId, String operatorName) {
         Scale scale = scaleService.findById(scaleId);
         if (scale == null) {
@@ -63,6 +68,8 @@ public class ScaleBorrowService {
         borrow.setBorrowReason(borrowReason);
         borrow.setExpectedReturnAt(expectedReturnAt);
         borrow.setIsReturned(false);
+        borrow.setOriginalScaleId(originalScaleId);
+        borrow.setBorrowContext(borrowContext);
         ScaleBorrow saved = scaleBorrowRepository.save(borrow);
 
         scale.setIsBorrowed(true);
@@ -71,9 +78,12 @@ public class ScaleBorrowService {
         }
         scaleService.update(scale, operatorId, operatorName);
 
+        String detail = "借出秤具: " + scale.getScaleCode() + " 到摊位ID:" + toStallId;
+        if (originalScaleId != null) {
+            detail += ", 替代原秤具ID:" + originalScaleId;
+        }
         auditLogService.log("BORROW", "SCALE_BORROW", saved.getId(),
-                operatorId, operatorName, "ADMIN",
-                "借出秤具: " + scale.getScaleCode() + " 到摊位ID:" + toStallId, null);
+                operatorId, operatorName, "ADMIN", detail, null);
         return saved;
     }
 

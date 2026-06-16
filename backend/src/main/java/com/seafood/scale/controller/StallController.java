@@ -1,10 +1,12 @@
 package com.seafood.scale.controller;
 
 import com.seafood.scale.common.Result;
+import com.seafood.scale.dto.StallScaleUsageVO;
 import com.seafood.scale.entity.Stall;
 import com.seafood.scale.enums.StallStatus;
 import com.seafood.scale.service.BusinessRuleService;
 import com.seafood.scale.service.StallService;
+import com.seafood.scale.service.StallScaleUsageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -19,6 +21,9 @@ public class StallController {
 
     @Autowired
     private BusinessRuleService businessRuleService;
+
+    @Autowired
+    private StallScaleUsageService stallScaleUsageService;
 
     @GetMapping
     public Result<List<Stall>> findAll() {
@@ -43,6 +48,11 @@ public class StallController {
     @GetMapping("/{id}/can-operate")
     public Result<Boolean> canOperate(@PathVariable Long id) {
         return Result.success(businessRuleService.canStallOperate(id));
+    }
+
+    @GetMapping("/{id}/scale-usage")
+    public Result<StallScaleUsageVO> getScaleUsage(@PathVariable Long id) {
+        return Result.success(stallScaleUsageService.getStallScaleUsage(id));
     }
 
     @PostMapping

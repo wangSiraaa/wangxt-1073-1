@@ -50,4 +50,9 @@ public class EnumController {
     public Result<List<String>> getSuspensionTypes() {
         return Result.success(Arrays.stream(SuspensionType.values()).map(Enum::name).collect(Collectors.toList()));
     }
+
+    @GetMapping("/reinspection-priorities")
+    public Result<List<String>> getReinspectionPriorities() {
+        return Result.success(Arrays.stream(ReinspectionPriority.values()).map(Enum::name).collect(Collectors.toList()));
+    }
 }

@@ -25,6 +25,9 @@ public class CalibrationService {
     @Autowired
     private AuditLogService auditLogService;
 
+    @Autowired
+    private RectificationReminderService rectificationReminderService;
+
     public List<Calibration> findAll() {
         return calibrationRepository.findAll();
     }
@@ -49,8 +52,10 @@ public class CalibrationService {
 
             if (calibration.getResult() == CalibrationResult.PASS) {
                 scale.setStatus(ScaleStatus.NORMAL);
+                rectificationReminderService.cancelRemindersForScale(scale.getId());
             } else if (calibration.getResult() == CalibrationResult.RECTIFICATION_REQUIRED) {
                 scale.setStatus(ScaleStatus.NEEDS_RECTIFICATION);
+                rectificationReminderService.createRemindersForRectification(calibration, scale);
             } else if (calibration.getResult() == CalibrationResult.DISQUALIFIED) {
                 scale.setStatus(ScaleStatus.DISABLED);
                 if (scale.getStallId() != null) {

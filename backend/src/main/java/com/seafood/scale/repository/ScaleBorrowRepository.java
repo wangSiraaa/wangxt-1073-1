@@ -11,4 +11,5 @@ public interface ScaleBorrowRepository extends JpaRepository<ScaleBorrow, Long> 
     List<ScaleBorrow> findByBorrowedToStallId(Long stallId);
     List<ScaleBorrow> findByIsReturnedFalse();
     ScaleBorrow findTopByScaleIdAndIsReturnedFalseOrderByBorrowedAtDesc(Long scaleId);
+    List<ScaleBorrow> findByBorrowedToStallIdAndIsReturnedFalse(Long stallId);
 }

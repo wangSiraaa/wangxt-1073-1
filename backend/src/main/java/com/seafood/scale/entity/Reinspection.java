@@ -1,5 +1,6 @@
 package com.seafood.scale.entity;
 
+import com.seafood.scale.enums.ReinspectionPriority;
 import com.seafood.scale.enums.ReinspectionStatus;
 import lombok.Data;
 import jakarta.persistence.*;
@@ -35,6 +36,10 @@ public class Reinspection {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 30)
     private ReinspectionStatus status = ReinspectionStatus.PENDING;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "priority", length = 20)
+    private ReinspectionPriority priority = ReinspectionPriority.NORMAL;
 
     @Column(name = "scheduled_time")
     private LocalDateTime scheduledTime;
