@@ -69,6 +69,10 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
+import {
+  Scale, Odometer, Shop, Files, Bell, RefreshRight,
+  VideoPause, Share, Document, User
+} from '@element-plus/icons-vue'
 
 const route = useRoute()
 const activeMenu = computed(() => route.path)

@@ -1,6 +1,7 @@
 package com.seafood.scale.entity;
 
 import com.seafood.scale.enums.ComplaintStatus;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
@@ -30,6 +31,7 @@ public class Complaint {
     private Long scaleId;
 
     @Column(name = "transaction_time")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Shanghai")
     private LocalDateTime transactionTime;
 
     @Column(name = "goods_name", length = 100)
@@ -70,6 +72,7 @@ public class Complaint {
     private String handleResult;
 
     @Column(name = "handle_time")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Shanghai")
     private LocalDateTime handleTime;
 
     @Column(name = "reinspection_id")

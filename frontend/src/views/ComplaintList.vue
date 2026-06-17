@@ -23,12 +23,15 @@
       <el-table-column label="多收金额" width="100">
         <template #default="scope">¥{{ scope.row.overchargedAmount }}</template>
       </el-table-column>
+      <el-table-column prop="description" label="情况描述" show-overflow-tooltip />
       <el-table-column label="状态" width="110">
         <template #default="scope">
           <el-tag :type="statusTagType(scope.row.status)" size="small">{{ statusText(scope.row.status) }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column prop="handlerName" label="处理人" width="90" />
+      <el-table-column prop="handleResult" label="处理结果" show-overflow-tooltip />
+      <el-table-column prop="handleTime" label="处理时间" width="170" />
       <el-table-column label="操作" width="240" fixed="right">
         <template #default="scope">
           <el-button v-if="scope.row.status === 'PENDING'" size="small" link type="primary" @click="investigate(scope.row)">调查</el-button>

@@ -49,7 +49,7 @@ INSERT INTO calibration (scale_id, calibration_date, metrologist_id, metrologist
 VALUES (@scale_b002, DATE_SUB(NOW(), INTERVAL 30 DAY), 1, '李计量', 'PASS', DATE_ADD(NOW(), INTERVAL 60 DAY), NULL, NOW(), NOW());
 
 -- 4. 创建投诉（短斤少两投诉）
-INSERT INTO complaint (complaint_no, complainant_name, complainant_phone, stall_id, scale_id, transaction_time, goods_name, display_weight, actual_weight, price_per_unit, overcharged_amount, complaint_remark, status, created_at, updated_at)
+INSERT INTO complaint (complaint_no, complainant_name, complainant_phone, stall_id, scale_id, transaction_time, goods_name, display_weight, actual_weight, price_per_unit, overcharged_amount, description, status, created_at, updated_at)
 VALUES ('CMP-DEMO-001', '王五', '13900139001', @stall_b002, @scale_b002, DATE_SUB(NOW(), INTERVAL 2 HOUR),
         '大闸蟹', 2.500, 2.000, 88.00, 44.00, '买大闸蟹2.5斤回家称重只有2斤', 'PENDING', NOW(), NOW());
 
